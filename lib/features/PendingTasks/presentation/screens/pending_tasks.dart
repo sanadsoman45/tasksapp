@@ -44,6 +44,7 @@ class _PendingTasksState extends State<PendingTasks> {
       child: Scaffold(
           body: BlocConsumer<TaskBloc, TaskState>(listener: (context, state) {
         if (state.errorMessage.isNotEmpty) {
+           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(state.errorMessage),
           ));
@@ -57,6 +58,8 @@ class _PendingTasksState extends State<PendingTasks> {
               .format(DateTime.parse(state.taskEndDate));
         }
         if (state.formSubmissionStatus is SubmissionSuccess) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.successMessage),backgroundColor: Colors.green.shade500,));
           context.read<TaskBloc>().add(FormStatusReset());
         }
         debugPrint(state.tasksData.toString());
@@ -125,100 +128,107 @@ class _PendingTasksState extends State<PendingTasks> {
     } else {
       return Expanded(
         child: ListView.builder(
-            itemCount: context.read<TaskBloc>().state.tasksData!.length,
-            itemBuilder: (context, index) {
-              final taskData = taskBloc.state.tasksData![index];
-              return GestureDetector(
-                onTap: () => {
-                  context.read<TaskBloc>().add(TaskTypeUpdate(index: index)) 
+          itemCount: context.read<TaskBloc>().state.tasksData!.length,
+          itemBuilder: (context, index) {
+            final taskData = taskBloc.state.tasksData![index];
+            return GestureDetector(
+              onTap: () =>
+                  {context.read<TaskBloc>().add(TaskTypeUpdate(index: index))},
+              child: Dismissible(
+                key: Key('${taskData["taskName"]}$index'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20.0),
+                  color: Colors.red,
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (direction) {
+                  final taskName = taskData["taskName"];
+                  //event to delete the item from list.
+                  context.read<TaskBloc>().add(TaskDelete(elementIndex: index));
                 },
-                child: Dismissible(
-                  key: Key('${taskData["taskName"]}$index'),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20.0),
-                    color: Colors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
+                child: Card(
+                  color: ColorManager.white,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: screenDimensions * 0.01,
+                    vertical: screenDimensions * 0.02,
                   ),
-                  onDismissed: (direction) {
-                    final taskName = taskData["taskName"];
-                    //event to delete the item from list.
-                    context
-                        .read<TaskBloc>()
-                        .add(TaskDelete(elementIndex: index));
-                    if (context.read<TaskBloc>().state.formSubmissionStatus
-                        is SubmissionSuccess) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            "Task $taskName has been Deleted Successfully."),
-                      ));
-                    }
-                  },
-                  child: Card(
-                    color: ColorManager.white,
-                    margin: EdgeInsets.symmetric(
-                      horizontal: screenDimensions * 0.01,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
                       vertical: screenDimensions * 0.02,
+                      horizontal: screenDimensions * 0.009,
                     ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: screenDimensions * 0.02,
-                        horizontal: screenDimensions * 0.009,
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                taskData['taskName'] ?? '',
-                                style: TextStyle(
-                                  color: context.read<TaskBloc>().state.tasksData![index]['taskType']=='completed'?Colors.blueGrey:Colors.black,
-                                  fontSize: screenDimensions * 0.03,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              taskData['taskName'] ?? '',
+                              style: TextStyle(
+                                color: context
+                                            .read<TaskBloc>()
+                                            .state
+                                            .tasksData![index]['taskType'] ==
+                                        'completed'
+                                    ? Colors.blueGrey
+                                    : Colors.black,
+                                fontSize: screenDimensions * 0.03,
+                                fontWeight: FontWeight.bold,
                               ),
-                              taskBloc.state.tasksData?[index]['taskType'] ==
-                                      'pending'
-                                  ? Icon(
-                                      Icons.pending_actions_sharp,
-                                      color: ColorManager.error,
-                                    )
-                                  : const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                    )
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                'Start Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskStartDate']))}',
-                                style: TextStyle(
-                                  color: context.read<TaskBloc>().state.tasksData![index]['taskType']=='completed'?Colors.blueGrey:Colors.black,
-                                    fontSize: screenDimensions * 0.02),
-                              ),
-                              SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.01),
-                              Text(
-                                'End Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskEndDate']))}',
-                                style: TextStyle(
-                                  color: context.read<TaskBloc>().state.tasksData![index]['taskType']=='completed'?Colors.blueGrey:Colors.black,
-                                    fontSize: screenDimensions * 0.02),
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
+                            ),
+                            taskBloc.state.tasksData?[index]['taskType'] ==
+                                    'pending'
+                                ? Icon(
+                                    Icons.pending_actions_sharp,
+                                    color: ColorManager.error,
+                                  )
+                                : const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                  )
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              'Start Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskStartDate']))}',
+                              style: TextStyle(
+                                  color: context
+                                              .read<TaskBloc>()
+                                              .state
+                                              .tasksData![index]['taskType'] ==
+                                          'completed'
+                                      ? Colors.blueGrey
+                                      : Colors.black,
+                                  fontSize: screenDimensions * 0.02),
+                            ),
+                            SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.01),
+                            Text(
+                              'End Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskEndDate']))}',
+                              style: TextStyle(
+                                  color: context
+                                              .read<TaskBloc>()
+                                              .state
+                                              .tasksData![index]['taskType'] ==
+                                          'completed'
+                                      ? Colors.blueGrey
+                                      : Colors.black,
+                                  fontSize: screenDimensions * 0.02),
+                            ),
+                          ],
+                        )
+                      ],
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-
+              ),
+            );
+          },
+        ),
       );
     }
   }
@@ -335,9 +345,12 @@ class _PendingTasksState extends State<PendingTasks> {
                           .isNotEmpty) {
                         _showDatePicker(
                             context, 'endDate', GoRouter.of(context));
-                      }
-                      else{
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("Please Enter Start Date First"), backgroundColor: ColorManager.error,));
+                      } else {
+                         ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: const Text("Please Enter Start Date First"),
+                          backgroundColor: ColorManager.error,
+                        ));
                       }
                     },
                     icon: const Icon(Icons.date_range),
@@ -369,11 +382,13 @@ class _PendingTasksState extends State<PendingTasks> {
               onPressed: () {
                 final state = context.read<TaskBloc>().state;
                 if (_isRequiredFieldsEmpty(context, state)) {
+                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: const Text("All Fields are Required"),
                     backgroundColor: ColorManager.error,
                   ));
                 } else if (state.errorMessage.isNotEmpty) {
+                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.errorMessage)));
                 } else {
@@ -388,12 +403,14 @@ class _PendingTasksState extends State<PendingTasks> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amberAccent,
               ),
-              child: const Text("Add Task",style: TextStyle(color: Colors.black),),
-            ),ElevatedButton(
+              child: const Text(
+                "Add Task",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            ElevatedButton(
               onPressed: () {
-                
-                  GoRouter.of(context).pop();
-                
+                GoRouter.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorManager.error,
@@ -414,17 +431,40 @@ class _PendingTasksState extends State<PendingTasks> {
 
   void _showDatePicker(
       BuildContext context, String datePickerType, GoRouter goRouter) {
+    final taskBlocState = context.read<TaskBloc>().state;
+    DateTime? initialDate;
+
+    if (datePickerType == 'startDate' &&
+        taskBlocState.taskStartDate.isNotEmpty) {
+      initialDate = DateTime.parse(taskBlocState.taskStartDate);
+    }
+    if (datePickerType == 'endDate' &&
+        taskBlocState.taskEndDate.isNotEmpty &&
+        (DateTime.parse(taskBlocState.taskStartDate)
+                .compareTo(DateTime.parse(taskBlocState.taskEndDate))) >
+            0) {
+      initialDate = DateTime.parse(taskBlocState.taskStartDate);
+    } else if (datePickerType == 'endDate' &&
+        taskBlocState.taskEndDate.isNotEmpty) {
+      initialDate = DateTime.parse(taskBlocState.taskEndDate);
+    }
+
     showDialog(
       context: context,
       builder: (buildContext) {
         return Dialog(
           child: Material(
             child: DatePicker(
+              selectedDate: initialDate,
+              selectedCellDecoration: BoxDecoration(
+                color: Colors.blueAccent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              highlightColor: Colors.blueAccent,
               maxDate: DateTime(2100, 12, 31),
               minDate: (datePickerType == 'startDate')
                   ? DateTime.now()
-                  : DateTime.tryParse(
-                          context.read<TaskBloc>().state.taskStartDate) ??
+                  : DateTime.tryParse(taskBlocState.taskStartDate) ??
                       DateTime.now(),
               onDateSelected: (value) {
                 if (datePickerType == 'endDate') {
@@ -435,10 +475,15 @@ class _PendingTasksState extends State<PendingTasks> {
                   context
                       .read<TaskBloc>()
                       .add(TaskStartDate(taskStartDate: value.toString()));
+                  if ((taskBlocState.taskEndDate.isNotEmpty) && (DateTime.parse(value.toString()).compareTo(
+                          DateTime.parse(taskBlocState.taskEndDate))) >0) {
+                    context
+                        .read<TaskBloc>()
+                        .add(TaskEndDate(taskEndDate: value.toString()));
+                  }
                 }
 
                 debugPrint(context.read<TaskBloc>().state.taskEndDate);
-
                 debugPrint(value.toString());
                 goRouter.pop();
               },
