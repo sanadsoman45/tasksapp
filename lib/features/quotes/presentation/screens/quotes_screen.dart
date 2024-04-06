@@ -73,7 +73,6 @@ class _QuotesScreen extends State<QuotesScreen> {
 
   @override
   void dispose() {
-    // widget.quotesBloc.close();
     super.dispose();
   }
 }

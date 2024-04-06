@@ -9,7 +9,7 @@ class AppRouteConfig {
         path: "/",
         name: RouteConstants.homeRoute,
         pageBuilder: (context, state) {
-          return MaterialPage(child: HomePage());
+          return const MaterialPage(child: HomePage());
         }),
   ]);
 }

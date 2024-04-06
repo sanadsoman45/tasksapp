@@ -30,3 +30,23 @@ class TaskSubmit extends TaskEvents{
 
   TaskSubmit({required this.taskName, required this.taskstartDate, required this.taskendDate,required this.taskType});
 }
+
+class TaskDelete extends TaskEvents{
+
+  final int elementIndex;
+
+  TaskDelete({required this.elementIndex});
+}
+
+class FormStatusReset extends TaskEvents{
+
+}
+
+class TaskTypeUpdate extends TaskEvents{
+  final int index;
+
+  TaskTypeUpdate({required this.index});
+}
+
+class clearState extends TaskEvents{
+}

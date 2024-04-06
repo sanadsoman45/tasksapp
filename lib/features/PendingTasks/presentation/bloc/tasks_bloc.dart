@@ -6,34 +6,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class TaskBloc extends Bloc<TaskEvents, TaskState> {
   TaskBloc() : super(TaskState()) {
     //event to handle task name input
-    on<TaskNameInput>((event, emit) => {
-          if (event.taskName.isEmpty)
-            {emit(state.copyWith(errorMessage: "Task Name Cannot be Empty."))}
-          else
-            {emit(state.copyWith(taskName: event.taskName, errorMessage: ""))}
-        });
+    on<TaskNameInput>((event, emit) => emit(state.copyWith(taskName: event.taskName, errorMessage: "")));
 
     //event to handle start date.
-    on<TaskStartDate>((event, emit) => {
-          if (event.taskStartDate.isEmpty)
-            {emit(state.copyWith(errorMessage: "Start Date is Mandatory"))}
-          else
-            {
-              emit(state.copyWith(
+    on<TaskStartDate>((event, emit) => emit(state.copyWith(
                   errorMessage: "", taskStartDate: event.taskStartDate))
-            }
-        });
+
+        );
 
     //event to handle task end date.
-    on<TaskEndDate>((event, emit) => {
-          if (event.taskEndDate.isEmpty)
-            {emit(state.copyWith(errorMessage: "End Date cannot be Empty"))}
-          else
-            {
-              emit(state.copyWith(
+    on<TaskEndDate>((event, emit) => emit(state.copyWith(
                   errorMessage: "", taskEndDate: event.taskEndDate))
-            }
-        });
+
+        );
 
     on<TaskSubmit>((event, emit) => emit(state.copyWith(
             formSubmissionStatus: SubmissionSuccess(),
@@ -49,5 +34,39 @@ class TaskBloc extends Bloc<TaskEvents, TaskState> {
                 'taskType': event.taskType
               }
             ])));
+
+    on<TaskDelete>((event, emit) {
+      List<Map<String, dynamic>> updatedList =
+          List.from(state.tasksData!.toList());
+      updatedList.removeAt(event.elementIndex);
+      emit(state.copyWith(
+          formSubmissionStatus: SubmissionSuccess(), tasksData: updatedList));
+    });
+
+    on<FormStatusReset>((event, emit) {
+      emit(state.copyWith(
+          formSubmissionStatus: const InitialFormSubmissionStatus()));
+    });
+
+    on<TaskTypeUpdate>((event, emit) {
+      List<Map<String, dynamic>> updatedList =
+          List.from(state.tasksData!.toList());
+      final taskData = updatedList[event.index];
+      taskData['taskType'] =
+          taskData['taskType'] == 'pending' ? 'completed' : 'pending';
+
+      emit(state.copyWith(
+          tasksData: updatedList.toList(),
+          formSubmissionStatus: SubmissionSuccess()));
+    });
+
+    on<clearState>((event, emit) => emit(state.copyWith(
+        formSubmissionStatus: const InitialFormSubmissionStatus(),
+        errorMessage: '',
+        taskEndDate: '',
+        taskName: '',
+        taskStartDate: '',
+        taskType: 'pending',
+       )));
   }
 }
