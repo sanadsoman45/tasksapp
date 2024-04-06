@@ -1,3 +1,4 @@
+import 'package:assignmenttask/features/PendingTasks/presentation/Widgets/custom_listview.dart';
 import 'package:assignmenttask/features/PendingTasks/presentation/bloc/formsubmissionstatus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,7 +45,7 @@ class _PendingTasksState extends State<PendingTasks> {
       child: Scaffold(
           body: BlocConsumer<TaskBloc, TaskState>(listener: (context, state) {
         if (state.errorMessage.isNotEmpty) {
-           ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(state.errorMessage),
           ));
@@ -59,7 +60,10 @@ class _PendingTasksState extends State<PendingTasks> {
         }
         if (state.formSubmissionStatus is SubmissionSuccess) {
           ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.successMessage),backgroundColor: Colors.green.shade500,));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.successMessage),
+            backgroundColor: Colors.green.shade500,
+          ));
           context.read<TaskBloc>().add(FormStatusReset());
         }
         debugPrint(state.tasksData.toString());
@@ -90,7 +94,7 @@ class _PendingTasksState extends State<PendingTasks> {
                           style: TextStyle(
                               fontSize: screenDimensions * 0.04,
                               fontWeight: FontWeight.bold)),
-                      _buildTaskList(context, screenDimensions)
+                      CustomListView(screenDimensions: screenDimensions)
                     ]),
                   ),
                   Align(
@@ -98,6 +102,7 @@ class _PendingTasksState extends State<PendingTasks> {
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: FloatingActionButton.extended(
+                        backgroundColor: Colors.amberAccent,
                         icon: const Icon(Icons.add_circle_outline_outlined),
                         onPressed: () {
                           _showTaskDialog(context, screenDimensions);
@@ -116,123 +121,6 @@ class _PendingTasksState extends State<PendingTasks> {
     );
   }
 
-  Widget _buildTaskList(BuildContext context, double screenDimensions) {
-    var taskBloc = context.read<TaskBloc>();
-    if (taskBloc.state.tasksData == null || taskBloc.state.tasksData!.isEmpty) {
-      return Center(
-        child: Text(
-          "No Tasks Added Yet",
-          style: TextStyle(fontSize: screenDimensions * 0.02),
-        ),
-      );
-    } else {
-      return Expanded(
-        child: ListView.builder(
-          itemCount: context.read<TaskBloc>().state.tasksData!.length,
-          itemBuilder: (context, index) {
-            final taskData = taskBloc.state.tasksData![index];
-            return GestureDetector(
-              onTap: () =>
-                  {context.read<TaskBloc>().add(TaskTypeUpdate(index: index))},
-              child: Dismissible(
-                key: Key('${taskData["taskName"]}$index'),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20.0),
-                  color: Colors.red,
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                onDismissed: (direction) {
-                  final taskName = taskData["taskName"];
-                  //event to delete the item from list.
-                  context.read<TaskBloc>().add(TaskDelete(elementIndex: index));
-                },
-                child: Card(
-                  color: ColorManager.white,
-                  margin: EdgeInsets.symmetric(
-                    horizontal: screenDimensions * 0.01,
-                    vertical: screenDimensions * 0.02,
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      vertical: screenDimensions * 0.02,
-                      horizontal: screenDimensions * 0.009,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              taskData['taskName'] ?? '',
-                              style: TextStyle(
-                                color: context
-                                            .read<TaskBloc>()
-                                            .state
-                                            .tasksData![index]['taskType'] ==
-                                        'completed'
-                                    ? Colors.blueGrey
-                                    : Colors.black,
-                                fontSize: screenDimensions * 0.03,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            taskBloc.state.tasksData?[index]['taskType'] ==
-                                    'pending'
-                                ? Icon(
-                                    Icons.pending_actions_sharp,
-                                    color: ColorManager.error,
-                                  )
-                                : const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                  )
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              'Start Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskStartDate']))}',
-                              style: TextStyle(
-                                  color: context
-                                              .read<TaskBloc>()
-                                              .state
-                                              .tasksData![index]['taskType'] ==
-                                          'completed'
-                                      ? Colors.blueGrey
-                                      : Colors.black,
-                                  fontSize: screenDimensions * 0.02),
-                            ),
-                            SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.01),
-                            Text(
-                              'End Date: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(taskData['taskEndDate']))}',
-                              style: TextStyle(
-                                  color: context
-                                              .read<TaskBloc>()
-                                              .state
-                                              .tasksData![index]['taskType'] ==
-                                          'completed'
-                                      ? Colors.blueGrey
-                                      : Colors.black,
-                                  fontSize: screenDimensions * 0.02),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    }
-  }
-
   void _showTaskDialog(BuildContext context, double screenDimensions) {
     //clearing the controllers for textfields and also state variables to avoid previous values.
     _startDateController.clear();
@@ -249,7 +137,7 @@ class _PendingTasksState extends State<PendingTasks> {
             ),
             elevation: 16,
             child: Container(
-              height: screenDimensions * 0.46,
+              height: screenDimensions * 0.4,
               padding: const EdgeInsets.all(20),
               child: _getForm(context, screenDimensions),
             ),
@@ -346,7 +234,7 @@ class _PendingTasksState extends State<PendingTasks> {
                         _showDatePicker(
                             context, 'endDate', GoRouter.of(context));
                       } else {
-                         ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: const Text("Please Enter Start Date First"),
                           backgroundColor: ColorManager.error,
@@ -378,44 +266,50 @@ class _PendingTasksState extends State<PendingTasks> {
             SizedBox(
               height: screenDimensions * 0.02,
             ),
-            ElevatedButton(
-              onPressed: () {
-                final state = context.read<TaskBloc>().state;
-                if (_isRequiredFieldsEmpty(context, state)) {
-                   ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: const Text("All Fields are Required"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    final state = context.read<TaskBloc>().state;
+                    if (_isRequiredFieldsEmpty(context, state)) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: const Text("All Fields are Required"),
+                        backgroundColor: ColorManager.error,
+                      ));
+                    } else if (state.errorMessage.isNotEmpty) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(state.errorMessage)));
+                    } else {
+                      context.read<TaskBloc>().add(TaskSubmit(
+                          taskName: state.taskName,
+                          taskType: state.taskType,
+                          taskendDate: state.taskEndDate,
+                          taskstartDate: state.taskStartDate));
+                      GoRouter.of(context).pop();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amberAccent,
+                  ),
+                  child: const Text(
+                    "Add Task",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    GoRouter.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: ColorManager.error,
-                  ));
-                } else if (state.errorMessage.isNotEmpty) {
-                   ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.errorMessage)));
-                } else {
-                  context.read<TaskBloc>().add(TaskSubmit(
-                      taskName: state.taskName,
-                      taskType: state.taskType,
-                      taskendDate: state.taskEndDate,
-                      taskstartDate: state.taskStartDate));
-                  GoRouter.of(context).pop();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amberAccent,
-              ),
-              child: const Text(
-                "Add Task",
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                GoRouter.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorManager.error,
-              ),
-              child: Text("Close", style: TextStyle(color: ColorManager.white)),
+                  ),
+                  child: Text("Close",
+                      style: TextStyle(color: ColorManager.white)),
+                )
+              ],
             )
           ],
         ),
@@ -475,8 +369,10 @@ class _PendingTasksState extends State<PendingTasks> {
                   context
                       .read<TaskBloc>()
                       .add(TaskStartDate(taskStartDate: value.toString()));
-                  if ((taskBlocState.taskEndDate.isNotEmpty) && (DateTime.parse(value.toString()).compareTo(
-                          DateTime.parse(taskBlocState.taskEndDate))) >0) {
+                  if ((taskBlocState.taskEndDate.isNotEmpty) &&
+                      (DateTime.parse(value.toString()).compareTo(
+                              DateTime.parse(taskBlocState.taskEndDate))) >
+                          0) {
                     context
                         .read<TaskBloc>()
                         .add(TaskEndDate(taskEndDate: value.toString()));
