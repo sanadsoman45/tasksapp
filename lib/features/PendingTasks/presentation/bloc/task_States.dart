@@ -8,6 +8,7 @@ class TaskState {
   final String errorMessage;
   final List<Map<String, dynamic>>? tasksData;
   final String taskType;
+  final String successMessage;
 
   TaskState(
       {this.taskName = "",
@@ -16,6 +17,7 @@ class TaskState {
       this.taskStartDate = "",
       this.taskEndDate = "",
       this.errorMessage = "",
+      this.successMessage = "",
       this.formSubmissionStatus = const InitialFormSubmissionStatus()});
 
   TaskState copyWith(
@@ -24,6 +26,7 @@ class TaskState {
       String? taskEndDate,
       String? errorMessage,
       String? taskType,
+      String? successMessage,
       List<Map<String, dynamic>>? tasksData,
       FormSubmissionStatus? formSubmissionStatus}) {
     return TaskState(
@@ -33,6 +36,7 @@ class TaskState {
         taskStartDate: taskStartDate ?? this.taskStartDate,
         tasksData: tasksData ?? this.tasksData,
         taskType: taskType ?? this.taskType,
+        successMessage: successMessage?? this.successMessage,
         formSubmissionStatus:
             formSubmissionStatus ?? this.formSubmissionStatus);
   }
